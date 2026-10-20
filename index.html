@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deshi Dating Footprint | Map Your Bangladesh Romances</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2canvas for card export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        body: ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    colors: {
+                        crimson: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            900: '#881337',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f3f4f6;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* High Precision District SVG styling */
+        .district-path {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            stroke: #1e293b;
+            stroke-width: 0.7px;
+            stroke-linejoin: round;
+            fill: #1e293b;
+        }
+
+        .district-path:hover {
+            stroke: #f43f5e;
+            stroke-width: 1.5px;
+            filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.7));
+            z-index: 10;
+        }
+
+        /* Themes for Share Card */
+        .theme-crimson {
+            background: linear-gradient(135deg, #18050e 0%, #2b0818 50%, #0d0208 100%);
+            border-color: #f43f5e;
+        }
+        .theme-crimson .accent-bg { background-color: #f43f5e; }
+        .theme-crimson .accent-text { color: #fb7185; }
+        .theme-crimson .district-selected { fill: #f43f5e !important; stroke: #ffe4e6 !important; }
+
+        .theme-indigo {
+            background: linear-gradient(135deg, #090a21 0%, #17194a 50%, #060714 100%);
+            border-color: #6366f1;
+        }
+        .theme-indigo .accent-bg { background-color: #6366f1; }
+        .theme-indigo .accent-text { color: #818cf8; }
+        .theme-indigo .district-selected { fill: #6366f1 !important; stroke: #e0e7ff !important; }
+
+        .theme-cyber {
+            background: linear-gradient(135deg, #03141a 0%, #082936 50%, #020d12 100%);
+            border-color: #06b6d4;
+        }
+        .theme-cyber .accent-bg { background-color: #06b6d4; }
+        .theme-cyber .accent-text { color: #22d3ee; }
+        .theme-cyber .district-selected { fill: #06b6d4 !important; stroke: #cff4fc !important; }
+
+        .theme-emerald {
+            background: linear-gradient(135deg, #03170e 0%, #08331f 50%, #010d07 100%);
+            border-color: #10b981;
+        }
+        .theme-emerald .accent-bg { background-color: #10b981; }
+        .theme-emerald .accent-text { color: #34d399; }
+        .theme-emerald .district-selected { fill: #10b981 !important; stroke: #d1fae5 !important; }
+
+        .theme-gold {
+            background: linear-gradient(135deg, #1f1402 0%, #3d2703 50%, #120b01 100%);
+            border-color: #f59e0b;
+        }
+        .theme-gold .accent-bg { background-color: #f59e0b; }
+        .theme-gold .accent-text { color: #fbbf24; }
+        .theme-gold .district-selected { fill: #f59e0b !important; stroke: #fef3c7 !important; }
+
+        /* Glassmorphism containers */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f43f5e;
+        }
+
+        /* Toast Animation */
+        @keyframes toastIn {
+            from { transform: translateY(100%) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-toast {
+            animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-rose-500 selection:text-white">
+
+    <header class="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-gradient-to-tr from-rose-600 to-pink-500 rounded-xl shadow-lg shadow-rose-950/50">
+                    <i data-lucide="heart" class="w-5 h-5 text-white fill-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300">
+                        Deshi Dating Map
+                    </h1>
+                    <p class="text-[11px] text-slate-400 font-body hidden sm:block">Map out where you've dated/almost dated across Bangladesh's 64 districts</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button id="reset-all-btn" class="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition border border-slate-700/60">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Reset Map</span>
+                </button>
+                <a href="#card-preview-section" class="flex items-center space-x-1.5 px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl transition shadow-md shadow-rose-950/40">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>Export Card</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow space-y-6">
+        
+        <!-- TOP CONTROLS & STATS BAR -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            
+            <!-- Quick Division Selectors -->
+            <div class="md:col-span-8 glass-card rounded-2xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                        <i data-lucide="layers" class="w-3.5 h-3.5"></i> Select by Division
+                    </span>
+                    <span class="text-[11px] text-slate-400">Quick toggle all districts in a division</span>
+                </div>
+                <div id="division-btn-group" class="flex flex-wrap gap-1.5">
+                    <!-- Dynamic Division Pills -->
+                </div>
+            </div>
+
+            <!-- Score / Badge Counter Card -->
+            <div class="md:col-span-4 glass-card rounded-2xl p-4 border-l-4 border-l-rose-500 flex flex-col justify-between">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Dating Conquest</span>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                            <span id="stat-count-main" class="text-3xl font-black text-white tracking-tight">0</span>
+                            <span class="text-sm text-slate-400 font-medium">/ 64 Districts</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="stat-pct-main" class="text-xl font-black text-amber-400">0%</span>
+                        <p class="text-[10px] text-slate-400">Nation Covered</p>
+                    </div>
+                </div>
+
+                <!-- Assigned Funny Title -->
+                <div class="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-[11px] text-slate-400">Title Rank:</span>
+                    <span id="assigned-badge-tag" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        National Single 🤍
+                    </span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- MAIN INTERACTIVE SECTION: MAP + SEARCH & LIST -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Detailed SVG Bangladesh Map (7 Cols) -->
+            <div class="lg:col-span-7 flex flex-col space-y-4">
+                <div class="glass-card rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[580px]">
+                    
+                    <!-- Map Top Header -->
+                    <div class="flex items-center justify-between z-10 mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-rose-400"></i>
+                            <h2 class="text-sm font-bold text-white">Interactive Bangladesh Map</h2>
+                        </div>
+                        <span class="text-[11px] text-slate-400">Click district to toggle partner status</span>
+                    </div>
+
+                    <!-- SVG Map Canvas Container -->
+                    <div id="map-container" class="relative flex-grow flex items-center justify-center min-h-[460px] py-2">
+                        
+                        <!-- HIGH QUALITY HIGH PRECISION BANGLADESH SVG MAP -->
+                        <div id="svg-wrapper" class="w-full max-w-[480px] aspect-[1/1.22] flex items-center justify-center">
+                            <svg id="bd-map-svg" viewBox="0 0 520 640" class="w-full h-full drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]">
+                                <g id="bd-districts-group">
+                                </g>
+                            </svg>
+                        </div>
+
+                        <!-- Hover Tooltip -->
+                        <div id="map-tooltip" class="absolute hidden bg-slate-900/95 border border-rose-500/50 text-white text-xs px-3 py-2 rounded-xl shadow-2xl backdrop-blur-md z-30 pointer-events-none transition-opacity duration-150">
+                            <div class="font-extrabold text-white" id="tooltip-district-name">Dhaka</div>
+                            <div class="text-[10px] text-slate-400" id="tooltip-division-name">Dhaka Division</div>
+                            <div class="text-[10px] font-semibold mt-1 text-rose-400" id="tooltip-status">Click to mark as dated</div>
+                        </div>
+
+                    </div>
+
+                    <!-- Map Legend Footer -->
+                    <div class="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-800/80 font-body">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-slate-800 border border-slate-700 inline-block"></span>
+                                <span class="text-[11px]">Unselected</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3 h-3 rounded-sm bg-rose-500 inline-block shadow-sm shadow-rose-500"></span>
+                                <span class="text-[11px] font-semibold text-rose-300">Dated Partner</span>
+                            </div>
+                        </div>
+                        <span class="text-[11px] text-slate-500 hidden sm:inline">64 Districts • Accurate Boundaries</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Search, District Pill Selector & Divisional Breakdown (5 Cols) -->
+            <div class="lg:col-span-5 flex flex-col space-y-4">
+
+                <!-- Search & Quick Selection List -->
+                <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-rose-400"></i>
+                            <span>Find District</span>
+                        </h3>
+                        <span id="filtered-count-tag" class="text-[11px] text-slate-400 font-body">64 Districts</span>
+                    </div>
+
+                    <!-- Search Input Box -->
+                    <div class="relative">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="text" id="district-search-input" placeholder="Search by district or division..." 
+                            class="w-full pl-9 pr-8 py-2 bg-slate-900/90 border border-slate-700/70 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-rose-500 font-body transition">
+                        <button id="clear-search-btn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Scrollable District Pills Container -->
+                    <div id="district-pills-container" class="flex flex-wrap gap-1.5 max-h-[220px] overflow-y-auto pr-1 py-1">
+                        <!-- Dynamic Pills -->
+                    </div>
+                </div>
+
+                <!-- Division Wise Stats Breakdown -->
+                <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+                    <h3 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
+                        <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Divisional Breakdown</span>
+                    </h3>
+                    
+                    <div id="division-stats-container" class="grid grid-cols-2 gap-2 text-xs font-body">
+                        <!-- Dynamic Divisional Stats Bars -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="card-preview-section" class="glass-card rounded-2xl p-6 space-y-6">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center space-x-2">
+                        <i data-lucide="share-2" class="w-5 h-5 text-rose-500"></i>
+                        <span>Generate & Share Your Card</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 font-body">Customize the styling and export your high-resolution PNG for Instagram or Facebook posts/stories</p>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="download-png-btn" class="px-5 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-extrabold rounded-xl shadow-lg shadow-rose-950/60 flex items-center space-x-2 text-xs transition transform active:scale-95">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Download PNG</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Customization Options Controls (5 Cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">Your Name or Alias</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="custom-name-input" value="Deshi Romantic" placeholder="Enter your handle..." 
+                                class="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white font-body focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">Visual Aesthetic Theme</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button data-theme="theme-crimson" class="theme-picker-btn p-2.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 text-left text-xs font-bold text-rose-300 flex items-center justify-between">
+                                <span>Romantic Crimson</span>
+                                <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+                            </button>
+                            <button data-theme="theme-indigo" class="theme-picker-btn p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left text-xs font-medium text-slate-400 hover:text-white flex items-center justify-between">
+                                <span>Midnight Indigo</span>
+                                <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
+                            </button>
+                            <button data-theme="theme-cyber" class="theme-picker-btn p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left text-xs font-medium text-slate-400 hover:text-white flex items-center justify-between">
+                                <span>Neon Cyberpunk</span>
+                                <span class="w-3 h-3 rounded-full bg-cyan-500 inline-block"></span>
+                            </button>
+                            <button data-theme="theme-emerald" class="theme-picker-btn p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left text-xs font-medium text-slate-400 hover:text-white flex items-center justify-between">
+                                <span>Emerald Green</span>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                            </button>
+                            <button data-theme="theme-gold" class="theme-picker-btn p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left text-xs font-medium text-slate-400 hover:text-white flex items-center justify-between col-span-2">
+                                <span>Sunset Gold</span>
+                                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 font-body space-y-1">
+                        <div class="flex items-center space-x-1 text-slate-300 font-semibold">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                            <span>100% Client-Side Privacy</span>
+                        </div>
+                        <p>No dating stats or custom names are stored on servers. Card rendering takes place completely inside your web browser.</p>
+                    </div>
+
+                </div>
+
+                <!-- Card Live Preview Canvas Target (7 Cols) -->
+                <div class="lg:col-span-7 flex justify-center">
+                    
+                    <!-- EXPORT TARGET ELEMENT -->
+                    <div id="export-card-target" class="theme-crimson rounded-2xl p-6 border-2 shadow-2xl w-full max-w-[460px] relative overflow-hidden font-sans transition-all">
+                        
+                        <!-- Background Glow Accent -->
+                        <div class="absolute -top-16 -right-16 w-36 h-36 accent-bg opacity-25 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between pb-4 border-b border-white/10 mb-4">
+                            <div>
+                                <h3 id="card-user-handle" class="font-extrabold text-lg text-white tracking-wide">Deshi Romantic</h3>
+                                <p class="text-[11px] text-slate-300 font-body">Bangladesh Dating Footprint Map</p>
+                            </div>
+                            <span id="card-assigned-badge" class="px-3 py-1 rounded-full text-xs font-black bg-white/10 text-white border border-white/20">
+                                National Single 🤍
+                            </span>
+                        </div>
+                        <!-- Card Main Content: Map Clone & Stats Grid -->
+                        <div class="grid grid-cols-12 gap-3 items-center">
+                            
+                            <!-- Cloned Vector Map -->
+                            <div class="col-span-6 flex items-center justify-center p-2 bg-black/30 rounded-xl border border-white/10 shadow-inner">
+                                <div id="card-map-wrapper" class="w-full aspect-[1/1.22] flex items-center justify-center">
+                                    <!-- Cloned SVG Map -->
+                                </div>
+                            </div>
+
+                            <!-- Summary Metrics -->
+                            <div class="col-span-6 space-y-2.5 font-body">
+                                
+                                <div class="bg-black/40 p-2.5 rounded-xl border border-white/10">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Districts Dated</p>
+                                    <div class="flex items-baseline space-x-1 mt-0.5">
+                                        <span id="card-metric-count" class="text-2xl font-black text-white">0</span>
+                                        <span class="text-xs text-slate-400 font-medium">/ 64</span>
+                                    </div>
+                                </div>
+
+                                <div class="bg-black/40 p-2.5 rounded-xl border border-white/10">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">National Coverage</p>
+                                    <p id="card-metric-pct" class="text-lg font-black accent-text">0%</p>
+                                </div>
+
+                                <div class="bg-black/40 p-2.5 rounded-xl border border-white/10">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">Top Division</p>
+                                    <p id="card-metric-topdiv" class="text-xs font-bold text-slate-200 truncate">None Yet</p>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Card Footer Brand Watermark -->
+                        <div class="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-400 font-body">
+                            <span class="flex items-center gap-1 font-semibold text-slate-300">
+                                <i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-rose-500"></i>
+                                <span>deshi-dating-map.app</span>
+                            </span>
+                            <span class="tracking-wider">#BangladeshDatingMap</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 pointer-events-none"></div>
+
+    <footer class="border-t border-slate-800/60 py-6 text-center text-xs text-slate-500 font-body mt-8">
+        <p>Created for fun & social entertainment • Made by Tasin Ahmed Mubdee 🇧🇩</p>
+    </footer>
+
+    <script>
+        // ------------------------------------------------------------------
+        // OPTIONAL: single-file mode. Paste a 64-district (ADM2) GeoJSON
+        // FeatureCollection here instead of using GEOJSON_URL below, e.g.
+        //   window.BD_GEOJSON_INLINE = { "type": "FeatureCollection", "features": [ ... ] };
+        // ------------------------------------------------------------------
+        window.BD_GEOJSON_INLINE = null;
+
+        // ------------------------------------------------------------------
+        // Path/URL to a 64-district (ADM2) GeoJSON file, e.g. "bd-districts.json"
+        // (host it next to this HTML file). Leave "" to keep the built-in fallback map.
+        // ------------------------------------------------------------------
+        const GEOJSON_URL = "";
+
+        // Fallback district shapes (used only if the GeoJSON can't be loaded).
+        // The `path` values are replaced automatically by real boundaries when the GeoJSON loads.
+        // Grouped accurately by Division
+        const BANGLADESH_64_DISTRICTS = [
+            // DHAKA DIVISION (13)
+            { id: "dhaka", name: "Dhaka", division: "Dhaka", path: "M 252,298 L 274,292 L 285,312 L 262,330 L 242,315 Z" },
+            { id: "gazipur", name: "Gazipur", division: "Dhaka", path: "M 250,268 L 278,262 L 282,292 L 252,298 Z" },
+            { id: "narayanganj", name: "Narayanganj", division: "Dhaka", path: "M 272,312 L 292,308 L 292,332 L 272,332 Z" },
+            { id: "tangail", name: "Tangail", division: "Dhaka", path: "M 215,238 L 250,242 L 250,278 L 215,268 Z" },
+            { id: "kishoreganj", name: "Kishoreganj", division: "Dhaka", path: "M 282,222 L 318,222 L 312,258 L 282,252 Z" },
+            { id: "manikganj", name: "Manikganj", division: "Dhaka", path: "M 215,278 L 248,282 L 242,308 L 210,298 Z" },
+            { id: "munshiganj", name: "Munshiganj", division: "Dhaka", path: "M 258,330 L 282,330 L 278,352 L 252,348 Z" },
+            { id: "narsingdi", name: "Narsingdi", division: "Dhaka", path: "M 282,268 L 308,262 L 302,292 L 282,292 Z" },
+            { id: "faridpur", name: "Faridpur", division: "Dhaka", path: "M 205,318 L 238,318 L 232,352 L 200,342 Z" },
+            { id: "gopalganj", name: "Gopalganj", division: "Dhaka", path: "M 200,358 L 232,358 L 228,392 L 195,382 Z" },
+            { id: "madaripur", name: "Madaripur", division: "Dhaka", path: "M 238,352 L 262,352 L 258,382 L 232,378 Z" },
+            { id: "rajbari", name: "Rajbari", division: "Dhaka", path: "M 180,298 L 210,302 L 205,322 L 175,318 Z" },
+            { id: "shariatpur", name: "Shariatpur", division: "Dhaka", path: "M 258,368 L 282,362 L 278,392 L 252,388 Z" },
+
+            // CHATTOGRAM DIVISION (11)
+            { id: "chattogram", name: "Chattogram", division: "Chattogram", path: "M 372,428 L 412,418 L 432,478 L 392,498 Z" },
+            { id: "coxsbazar", name: "Cox's Bazar", division: "Chattogram", path: "M 412,498 L 442,498 L 458,578 L 428,578 Z" },
+            { id: "cumilla", name: "Cumilla", division: "Chattogram", path: "M 318,308 L 358,302 L 352,352 L 312,348 Z" },
+            { id: "feni", name: "Feni", division: "Chattogram", path: "M 352,368 L 382,362 L 378,398 L 348,392 Z" },
+            { id: "brahmanbaria", name: "Brahmanbaria", division: "Chattogram", path: "M 312,258 L 348,252 L 342,298 L 308,292 Z" },
+            { id: "chandpur", name: "Chandpur", division: "Chattogram", path: "M 288,348 L 318,348 L 312,382 L 282,378 Z" },
+            { id: "lakshmipur", name: "Lakshmipur", division: "Chattogram", path: "M 292,388 L 322,388 L 318,422 L 288,418 Z" },
+            { id: "noakhali", name: "Noakhali", division: "Chattogram", path: "M 322,388 L 358,382 L 352,432 L 318,428 Z" },
+            { id: "khagrachhari", name: "Khagrachhari", division: "Chattogram", path: "M 388,338 L 422,332 L 418,392 L 382,388 Z" },
+            { id: "rangamati", name: "Rangamati", division: "Chattogram", path: "M 422,348 L 462,358 L 448,448 L 408,428 Z" },
+            { id: "bandarban", name: "Bandarban", division: "Chattogram", path: "M 432,458 L 472,458 L 458,538 L 418,518 Z" },
+
+            // SYLHET DIVISION (4)
+            { id: "sylhet", name: "Sylhet", division: "Sylhet", path: "M 378,168 L 432,158 L 422,218 L 368,208 Z" },
+            { id: "moulvibazar", name: "Moulvibazar", division: "Sylhet", path: "M 368,212 L 418,212 L 408,258 L 358,248 Z" },
+            { id: "habiganj", name: "Habiganj", division: "Sylhet", path: "M 332,222 L 368,222 L 358,268 L 322,262 Z" },
+            { id: "sunamganj", name: "Sunamganj", division: "Sylhet", path: "M 322,158 L 378,162 L 368,202 L 318,192 Z" },
+
+            // RAJSHAHI DIVISION (8)
+            { id: "rajshahi", name: "Rajshahi", division: "Rajshahi", path: "M 100,188 L 140,182 L 135,222 L 95,218 Z" },
+            { id: "bogra", name: "Bogura", division: "Rajshahi", path: "M 160,158 L 200,152 L 195,198 L 155,192 Z" },
+            { id: "pabna", name: "Pabna", division: "Rajshahi", path: "M 140,238 L 180,232 L 175,272 L 135,268 Z" },
+            { id: "sirajganj", name: "Sirajganj", division: "Rajshahi", path: "M 180,198 L 215,192 L 210,242 L 175,238 Z" },
+            { id: "naogaon", name: "Naogaon", division: "Rajshahi", path: "M 115,132 L 160,128 L 155,172 L 110,168 Z" },
+            { id: "natore", name: "Natore", division: "Rajshahi", path: "M 130,198 L 170,192 L 165,232 L 125,228 Z" },
+            { id: "chapainawabganj", name: "Chapainawabganj", division: "Rajshahi", path: "M 70,162 L 110,158 L 100,202 L 60,198 Z" },
+            { id: "joypurhat", name: "Joypurhat", division: "Rajshahi", path: "M 140,108 L 170,102 L 165,132 L 135,128 Z" },
+
+            // RANGPUR DIVISION (8)
+            { id: "rangpur", name: "Rangpur", division: "Rangpur", path: "M 120,58 L 160,52 L 155,92 L 115,88 Z" },
+            { id: "dinajpur", name: "Dinajpur", division: "Rangpur", path: "M 75,58 L 115,52 L 110,112 L 70,108 Z" },
+            { id: "gaibandha", name: "Gaibandha", division: "Rangpur", path: "M 155,98 L 190,92 L 185,138 L 150,132 Z" },
+            { id: "kurigram", name: "Kurigram", division: "Rangpur", path: "M 165,48 L 205,42 L 200,98 L 160,92 Z" },
+            { id: "lalmonirhat", name: "Lalmonirhat", division: "Rangpur", path: "M 135,28 L 180,22 L 170,52 L 125,48 Z" },
+            { id: "nilphamari", name: "Nilphamari", division: "Rangpur", path: "M 90,22 L 130,18 L 125,58 L 85,52 Z" },
+            { id: "panchagarh", name: "Panchagarh", division: "Rangpur", path: "M 50,5 L 85,2 L 80,38 L 45,35 Z" },
+            { id: "thakurgaon", name: "Thakurgaon", division: "Rangpur", path: "M 40,38 L 75,32 L 70,78 L 35,72 Z" },
+
+            // KHULNA DIVISION (10)
+            { id: "khulna", name: "Khulna", division: "Khulna", path: "M 130,408 L 165,408 L 160,468 L 125,458 Z" },
+            { id: "jashore", name: "Jashore", division: "Khulna", path: "M 100,332 L 140,332 L 135,378 L 95,372 Z" },
+            { id: "bagerhat", name: "Bagerhat", division: "Khulna", path: "M 170,408 L 205,408 L 200,472 L 165,462 Z" },
+            { id: "kushtia", name: "Kushtia", division: "Khulna", path: "M 120,268 L 160,268 L 155,302 L 115,298 Z" },
+            { id: "satkhira", name: "Satkhira", division: "Khulna", path: "M 90,408 L 125,408 L 120,478 L 85,468 Z" },
+            { id: "chuadanga", name: "Chuadanga", division: "Khulna", path: "M 90,292 L 125,292 L 120,328 L 85,322 Z" },
+            { id: "jhenaidah", name: "Jhenaidah", division: "Khulna", path: "M 120,302 L 155,302 L 150,338 L 115,332 Z" },
+            { id: "magura", name: "Magura", division: "Khulna", path: "M 150,312 L 180,312 L 175,342 L 145,338 Z" },
+            { id: "meherpur", name: "Meherpur", division: "Khulna", path: "M 75,278 L 105,278 L 100,308 L 70,302 Z" },
+            { id: "narail", name: "Narail", division: "Khulna", path: "M 145,342 L 180,342 L 175,378 L 140,372 Z" },
+
+            // BARISHAL DIVISION (6)
+            { id: "barishal", name: "Barishal", division: "Barishal", path: "M 220,392 L 255,392 L 250,432 L 215,428 Z" },
+            { id: "bhola", name: "Bhola", division: "Barishal", path: "M 260,408 L 290,408 L 285,472 L 255,468 Z" },
+            { id: "barguna", name: "Barguna", division: "Barishal", path: "M 190,462 L 225,462 L 220,508 L 185,498 Z" },
+            { id: "jhalokati", name: "Jhalokati", division: "Barishal", path: "M 205,422 L 230,422 L 225,452 L 200,448 Z" },
+            { id: "patuakhali", name: "Patuakhali", division: "Barishal", path: "M 225,452 L 260,452 L 255,512 L 220,508 Z" },
+            { id: "pirojpur", name: "Pirojpur", division: "Barishal", path: "M 185,422 L 210,422 L 205,462 L 180,458 Z" },
+
+            // MYMENSINGH DIVISION (4)
+            { id: "mymensingh", name: "Mymensingh", division: "Mymensingh", path: "M 240,172 L 285,168 L 280,218 L 235,212 Z" },
+            { id: "jamalpur", name: "Jamalpur", division: "Mymensingh", path: "M 195,148 L 240,142 L 235,192 L 190,188 Z" },
+            { id: "netrokona", name: "Netrokona", division: "Mymensingh", path: "M 280,158 L 320,152 L 315,208 L 275,202 Z" },
+            { id: "sherpur", name: "Sherpur", division: "Mymensingh", path: "M 225,122 L 265,118 L 260,158 L 220,152 Z" }
+        ];
+
+        const DIVISIONS_LIST = ["Dhaka", "Chattogram", "Sylhet", "Rajshahi", "Khulna", "Barishal", "Rangpur", "Mymensingh"];
+
+        // Global Application State
+        let selectedDistricts = new Set();
+        let currentTheme = 'theme-crimson';
+
+        // DOM Element Cache
+        const svgGroup = document.getElementById('bd-districts-group');
+        const tooltip = document.getElementById('map-tooltip');
+        const tooltipName = document.getElementById('tooltip-district-name');
+        const tooltipDiv = document.getElementById('tooltip-division-name');
+        const tooltipStatus = document.getElementById('tooltip-status');
+        
+        const pillsContainer = document.getElementById('district-pills-container');
+        const searchInput = document.getElementById('district-search-input');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+        const divisionBtnGroup = document.getElementById('division-btn-group');
+        const divisionStatsContainer = document.getElementById('division-stats-container');
+        const filteredCountTag = document.getElementById('filtered-count-tag');
+
+        // Main Stats DOM
+        const statCountMain = document.getElementById('stat-count-main');
+        const statPctMain = document.getElementById('stat-pct-main');
+        const assignedBadgeTag = document.getElementById('assigned-badge-tag');
+
+        // Card DOM Elements
+        const exportCardTarget = document.getElementById('export-card-target');
+        const customNameInput = document.getElementById('custom-name-input');
+        const cardUserHandle = document.getElementById('card-user-handle');
+        const cardAssignedBadge = document.getElementById('card-assigned-badge');
+        const cardMetricCount = document.getElementById('card-metric-count');
+        const cardMetricPct = document.getElementById('card-metric-pct');
+        const cardMetricTopdiv = document.getElementById('card-metric-topdiv');
+        const cardMapWrapper = document.getElementById('card-map-wrapper');
+        const downloadPngBtn = document.getElementById('download-png-btn');
+        const resetAllBtn = document.getElementById('reset-all-btn');
+
+        function initApp() {
+            renderMap();
+            renderDivisionButtons();
+            renderPills();
+            renderDivisionStats();
+            updateAllStats();
+            cloneMapToCard();
+
+            lucide.createIcons();
+
+            // Event Listeners
+            searchInput.addEventListener('input', handleSearch);
+            clearSearchBtn.addEventListener('click', clearSearch);
+            resetAllBtn.addEventListener('click', resetMapSelections);
+            customNameInput.addEventListener('input', (e) => {
+                cardUserHandle.textContent = e.target.value.trim() || 'Deshi Romantic';
+            });
+
+            // Theme Switcher Listeners
+            document.querySelectorAll('.theme-picker-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.getAttribute('data-theme');
+                    setTheme(theme);
+                });
+            });
+
+            downloadPngBtn.addEventListener('click', exportCardPNG);
+
+            // Upgrade to the accurate GeoJSON-based map (falls back silently to the built-in shapes)
+            loadAccurateMap();
+        }
+
+        // =====================================================================
+        // ACCURATE MAP LOADER  (converts real 64-district GeoJSON -> SVG paths)
+        // =====================================================================
+        const VIEW_W = 520, VIEW_H = 640, VIEW_PAD = 14;
+
+        // Alternate spellings found in public datasets -> our internal district ids
+        const NAME_ALIASES = {
+            chittagong: 'chattogram', comilla: 'cumilla', jessore: 'jashore', barisal: 'barishal',
+            coxbazar: 'coxsbazar', coxsbazaar: 'coxsbazar',
+            nawabganj: 'chapainawabganj', chapainababganj: 'chapainawabganj', chapainawabgonj: 'chapainawabganj',
+            jhalokathi: 'jhalokati', jhalakati: 'jhalokati', jhalakathi: 'jhalokati',
+            netrakona: 'netrokona', netrokona: 'netrokona',
+            maulvibazar: 'moulvibazar', maulavibazar: 'moulvibazar', moulavibazar: 'moulvibazar',
+            khagrachari: 'khagrachhari', khagrachhari: 'khagrachhari',
+            jhenidah: 'jhenaidah', jhenaidah: 'jhenaidah',
+            laxmipur: 'lakshmipur', lakshmipur: 'lakshmipur',
+            narsinghdi: 'narsingdi', narshingdi: 'narsingdi',
+            brahamanbaria: 'brahmanbaria', brahmanbaria: 'brahmanbaria',
+            kishorganj: 'kishoreganj', kishoreganj: 'kishoreganj',
+            jaipurhat: 'joypurhat', joypurhat: 'joypurhat',
+            nator: 'natore', munshigonj: 'munshiganj', narayangonj: 'narayanganj',
+            bogura: 'bogra', bogra: 'bogra',
+            gaibanda: 'gaibandha', lalmanirhat: 'lalmonirhat', sherpur: 'sherpur'
+        };
+
+        const NAME_PROPERTY_CANDIDATES = [
+            'shapeName', 'ADM2_EN', 'adm2_en', 'NAME_2', 'name_2', 'DISTRICT', 'District', 'district',
+            'DIST_NAME', 'dist_name', 'DISTNAME', 'ADM2_NAME', 'admin2Name_en', 'admin2name', 'NAME', 'Name', 'name'
+        ];
+
+        function normName(s) {
+            return String(s || '').toLowerCase().replace(/\s*(district|zila|zilla)\s*$/i, '').replace(/[^a-z]/g, '');
+        }
+
+        function buildDistrictLookup() {
+            const lookup = {};
+            BANGLADESH_64_DISTRICTS.forEach(d => {
+                lookup[normName(d.id)] = d.id;
+                lookup[normName(d.name)] = d.id;
+            });
+            Object.entries(NAME_ALIASES).forEach(([alias, id]) => { lookup[alias] = id; });
+            return lookup;
+        }
+
+        function featureDistrictId(feature, lookup) {
+            const props = feature.properties || {};
+            for (const key of NAME_PROPERTY_CANDIDATES) {
+                if (props[key] != null) {
+                    const id = lookup[normName(props[key])];
+                    if (id) return id;
+                }
+            }
+            // Last resort: any string property that matches a known district
+            for (const val of Object.values(props)) {
+                if (typeof val === 'string') {
+                    const id = lookup[normName(val)];
+                    if (id) return id;
+                }
+            }
+            return null;
+        }
+
+        function geometryRings(geom) {
+            if (!geom) return [];
+            if (geom.type === 'Polygon') return geom.coordinates;
+            if (geom.type === 'MultiPolygon') return geom.coordinates.flat(1);
+            return [];
+        }
+
+        // Returns true if all 64 districts were matched and applied
+        function applyGeoJSON(geo) {
+            const features = (geo && geo.features) || [];
+            const lookup = buildDistrictLookup();
+
+            // Group rings per district id (a district can be split over several features)
+            const ringsById = {};
+            const unmatched = [];
+            features.forEach(f => {
+                const id = featureDistrictId(f, lookup);
+                if (!id) { unmatched.push(f.properties); return; }
+                (ringsById[id] = ringsById[id] || []).push(...geometryRings(f.geometry));
+            });
+
+            const missing = BANGLADESH_64_DISTRICTS.filter(d => !ringsById[d.id]).map(d => d.name);
+            if (missing.length > 0) {
+                console.warn('[Map] Districts missing from GeoJSON:', missing);
+                console.warn('[Map] Unmatched GeoJSON features (add aliases in NAME_ALIASES):', unmatched);
+                return false;
+            }
+
+            // Bounding box across all districts
+            let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+            Object.values(ringsById).forEach(rings => rings.forEach(ring => ring.forEach(([lon, lat]) => {
+                if (lon < minLon) minLon = lon;
+                if (lon > maxLon) maxLon = lon;
+                if (lat < minLat) minLat = lat;
+                if (lat > maxLat) maxLat = lat;
+            })));
+
+            // Equirectangular projection with latitude correction, fitted into the viewBox
+            const kx = Math.cos(((minLat + maxLat) / 2) * Math.PI / 180);
+            const spanX = (maxLon - minLon) * kx;
+            const spanY = (maxLat - minLat);
+            const scale = Math.min((VIEW_W - 2 * VIEW_PAD) / spanX, (VIEW_H - 2 * VIEW_PAD) / spanY);
+            const offX = (VIEW_W - spanX * scale) / 2;
+            const offY = (VIEW_H - spanY * scale) / 2;
+
+            const px = lon => offX + (lon - minLon) * kx * scale;
+            const py = lat => offY + (maxLat - lat) * scale;
+
+            BANGLADESH_64_DISTRICTS.forEach(d => {
+                const parts = [];
+                ringsById[d.id].forEach(ring => {
+                    const pts = [];
+                    let lastX = null, lastY = null;
+                    ring.forEach(([lon, lat]) => {
+                        const x = Math.round(px(lon) * 10) / 10;
+                        const y = Math.round(py(lat) * 10) / 10;
+                        if (x !== lastX || y !== lastY) { pts.push(`${x},${y}`); lastX = x; lastY = y; }
+                    });
+                    if (pts.length >= 3) parts.push(`M${pts.join('L')}Z`);
+                });
+                d.path = parts.join(' ');
+            });
+
+            return true;
+        }
+
+        async function loadAccurateMap() {
+            let geo = window.BD_GEOJSON_INLINE || null;
+
+            if (!geo && GEOJSON_URL) {
+                try {
+                    const res = await fetch(GEOJSON_URL);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    geo = await res.json();
+                } catch (err) {
+                    console.warn('[Map] Could not load GeoJSON:', err);
+                    showToast('Could not load map file - using fallback map', 'error');
+                    return;
+                }
+            }
+
+            if (!geo) {
+                console.info('[Map] No GeoJSON configured (GEOJSON_URL / BD_GEOJSON_INLINE) - using fallback shapes.');
+                return;
+            }
+
+            if (!applyGeoJSON(geo)) {
+                showToast('Map data did not match all 64 districts - using fallback map', 'error');
+                return;
+            }
+
+            // Rebuild main map + export card clone, then restore current selections
+            renderMap();
+            cloneMapToCard();
+            selectedDistricts.forEach(id => updateDistrictVisuals(id));
+        }
+
+        // Render SVG Vector Map
+        function renderMap() {
+            svgGroup.innerHTML = '';
+            BANGLADESH_64_DISTRICTS.forEach(d => {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", d.path);
+                path.setAttribute("id", `map-dist-${d.id}`);
+                path.setAttribute("class", "district-path");
+                path.setAttribute("data-id", d.id);
+                path.setAttribute("data-district", d.name);
+                path.setAttribute("fill-rule", "evenodd");
+
+                path.addEventListener('mouseenter', (e) => showTooltip(e, d));
+                path.addEventListener('mousemove', moveTooltip);
+                path.addEventListener('mouseleave', hideTooltip);
+                path.addEventListener('click', () => toggleDistrict(d.id));
+
+                svgGroup.appendChild(path);
+            });
+        }
+
+        // Clone SVG Vector to Export Card
+        function cloneMapToCard() {
+            const originalSvg = document.getElementById('bd-map-svg');
+            const clone = originalSvg.cloneNode(true);
+            clone.setAttribute('id', 'card-svg-cloned');
+            cardMapWrapper.innerHTML = '';
+            cardMapWrapper.appendChild(clone);
+        }
+
+        // Render Division Quick Toggle Buttons
+        function renderDivisionButtons() {
+            divisionBtnGroup.innerHTML = '';
+            DIVISIONS_LIST.forEach(divName => {
+                const btn = document.createElement('button');
+                btn.className = `px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-800 bg-slate-900/90 text-slate-300 hover:border-slate-600 transition flex items-center space-x-1 font-body`;
+                btn.innerHTML = `<span>${divName}</span>`;
+                btn.addEventListener('click', () => toggleDivisionAll(divName));
+                divisionBtnGroup.appendChild(btn);
+            });
+        }
+
+        // Toggle all districts within a division
+        function toggleDivisionAll(divisionName) {
+            const divDistricts = BANGLADESH_64_DISTRICTS.filter(d => d.division === divisionName);
+            const allSelected = divDistricts.every(d => selectedDistricts.has(d.id));
+
+            divDistricts.forEach(d => {
+                if (allSelected) {
+                    selectedDistricts.delete(d.id);
+                } else {
+                    selectedDistricts.add(d.id);
+                }
+                updateDistrictVisuals(d.id);
+            });
+
+            showToast(allSelected ? `Deselected all in ${divisionName}` : `Marked all in ${divisionName} as dated!`);
+            updateAllStats();
+        }
+
+        // Render Scrollable District Select Pills
+        function renderPills() {
+            pillsContainer.innerHTML = '';
+            BANGLADESH_64_DISTRICTS.forEach(d => {
+                const pill = document.createElement('button');
+                pill.id = `pill-${d.id}`;
+                pill.className = `px-2.5 py-1 text-xs rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 transition font-body`;
+                pill.innerHTML = `<span>${d.name}</span>`;
+                pill.addEventListener('click', () => toggleDistrict(d.id));
+                pillsContainer.appendChild(pill);
+            });
+        }
+
+        // Toggle Single District
+        function toggleDistrict(id) {
+            const district = BANGLADESH_64_DISTRICTS.find(d => d.id === id);
+            if (selectedDistricts.has(id)) {
+                selectedDistricts.delete(id);
+                showToast(`Removed ${district.name}`, 'info');
+            } else {
+                selectedDistricts.add(id);
+                showToast(`Added ${district.name} 💕`, 'success');
+            }
+            updateDistrictVisuals(id);
+            updateAllStats();
+        }
+
+        // Sync SVG & Pill UI states
+        function updateDistrictVisuals(id) {
+            const isSelected = selectedDistricts.has(id);
+
+            // Update Main SVG
+            const path = document.getElementById(`map-dist-${id}`);
+            if (path) {
+                if (isSelected) {
+                    path.classList.add('fill-rose-500', 'district-selected');
+                } else {
+                    path.classList.remove('fill-rose-500', 'district-selected');
+                }
+            }
+
+            // Update Card SVG Clone
+            const cardPath = cardMapWrapper.querySelector(`#map-dist-${id}`);
+            if (cardPath) {
+                if (isSelected) {
+                    cardPath.classList.add('fill-rose-500', 'district-selected');
+                } else {
+                    cardPath.classList.remove('fill-rose-500', 'district-selected');
+                }
+            }
+
+            // Update Pill UI
+            const pill = document.getElementById(`pill-${id}`);
+            if (pill) {
+                if (isSelected) {
+                    pill.className = `px-2.5 py-1 text-xs rounded-lg border border-rose-500 bg-rose-500/20 text-rose-300 font-semibold font-body`;
+                } else {
+                    pill.className = `px-2.5 py-1 text-xs rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:border-slate-700 transition font-body`;
+                }
+            }
+        }
+
+        // Filter Pills Search
+        function handleSearch() {
+            const q = searchInput.value.toLowerCase().trim();
+            if (q.length > 0) {
+                clearSearchBtn.classList.remove('hidden');
+            } else {
+                clearSearchBtn.classList.add('hidden');
+            }
+
+            let visibleCount = 0;
+            BANGLADESH_64_DISTRICTS.forEach(d => {
+                const match = d.name.toLowerCase().includes(q) || d.division.toLowerCase().includes(q);
+                const pill = document.getElementById(`pill-${d.id}`);
+                if (match) {
+                    pill?.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    pill?.classList.add('hidden');
+                }
+            });
+
+            filteredCountTag.textContent = `${visibleCount} Districts`;
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            handleSearch();
+        }
+
+        // Tooltip Event Handlers
+        function showTooltip(e, d) {
+            const isSelected = selectedDistricts.has(d.id);
+            tooltipName.textContent = d.name;
+            tooltipDiv.textContent = `${d.division} Division`;
+            tooltipStatus.textContent = isSelected ? '❤️ Marked as Dated (Click to remove)' : '🤍 Click to mark partner';
+            tooltipStatus.className = isSelected ? 'text-[10px] font-semibold mt-1 text-rose-400' : 'text-[10px] font-semibold mt-1 text-slate-400';
+            tooltip.classList.remove('hidden');
+            moveTooltip(e);
+        }
+
+        function moveTooltip(e) {
+            const containerRect = document.getElementById('map-container').getBoundingClientRect();
+            tooltip.style.left = `${e.clientX - containerRect.left + 15}px`;
+            tooltip.style.top = `${e.clientY - containerRect.top - 15}px`;
+        }
+
+        function hideTooltip() {
+            tooltip.classList.add('hidden');
+        }
+
+        // Update Stats & Badges Logic
+        function updateAllStats() {
+            const count = selectedDistricts.size;
+            const pct = Math.round((count / 64) * 100);
+
+            // Update Numerical UI
+            statCountMain.textContent = count;
+            statPctMain.textContent = `${pct}%`;
+
+            cardMetricCount.textContent = count;
+            cardMetricPct.textContent = `${pct}%`;
+
+            // Calculate Division Breakdown
+            const divCounts = {};
+            selectedDistricts.forEach(id => {
+                const d = BANGLADESH_64_DISTRICTS.find(item => item.id === id);
+                if (d) {
+                    divCounts[d.division] = (divCounts[d.division] || 0) + 1;
+                }
+            });
+
+            renderDivisionStats(divCounts);
+
+            // Top Division
+            let topDiv = 'None';
+            let maxCount = 0;
+            Object.entries(divCounts).forEach(([div, cnt]) => {
+                if (cnt > maxCount) {
+                    maxCount = cnt;
+                    topDiv = div;
+                }
+            });
+            cardMetricTopdiv.textContent = maxCount > 0 ? `${topDiv} (${maxCount})` : 'None Yet';
+
+            // Generate Badge
+            const badge = generateFunnyBadge(count, topDiv, divCounts);
+            assignedBadgeTag.textContent = badge;
+            cardAssignedBadge.textContent = badge;
+        }
+
+        // Generate Viral Titles
+        function generateFunnyBadge(count, topDiv, divCounts) {
+            /*if (count === 0) return "National Single 🤍";
+            if (count === 64) return "Legendary Romantic 👑🇧🇩";
+            if (count >= 45) return "National Heartbreaker 💖";
+            if (count >= 30) return "Divisional PLayer ✈️";
+            if (count >= 15) return "Regional Romeo 🧭";
+            if (count >= 5) return "Casual Romantic 💕";*/
+
+            // Specific Division Titles
+            if (topDiv === 'Dhaka' && divCounts['Dhaka'] >= 1) return "Dhakaiya Player 🚗";
+            if (topDiv === 'Sylhet' && divCounts['Sylhet'] >= 1) return "Romantic Sylheti 🍃";
+            if (topDiv === 'Chattogram' && divCounts['Chattogram'] >= 1) return "Chatgaiyya Flirt 🌊";
+            if (topDiv === 'Barishal' && divCounts['Barishal'] >= 1) return "Barishailla Charmer 🛶";
+            if (topDiv === 'Rangpur' && divCounts['Rangpur'] >= 1) return "North Bengali Player 🌾";
+            if (topDiv === 'Mymensingh' && divCounts['Mymensingh'] >= 1) return "Momishinga Flirt 🎸";
+            if (topDiv === 'Rajshahi' && divCounts['Rajshahi'] >= 1) return "Rajshahir Romeo 🥭";
+            if (topDiv === 'Khulna' && divCounts['Khulna'] >= 1) return "South Bengali Charmer 🐅";
+
+            return "Local Lover 🏠";
+        }
+       
+        function onDistrictToggle() {
+        const selectedDistricts = getSelectedDistricts();
+        const divCounts = calculateDivisionalCounts(selectedDistricts);
+
+        // Update total counts display
+            document.getElementById('selectedCount').textContent = selectedDistricts.length;
+         // Update the divisional badge on the poster card
+         updateRankTitle(selectedDistricts, divCounts);
+        }
+
+        // Render Divisional Breakdown Progress Bars
+        function renderDivisionStats(divCounts = {}) {
+            divisionStatsContainer.innerHTML = '';
+            DIVISIONS_LIST.forEach(divName => {
+                const count = divCounts[divName] || 0;
+                const totalInDiv = BANGLADESH_64_DISTRICTS.filter(d => d.division === divName).length;
+                const pct = Math.round((count / totalInDiv) * 100);
+
+                const item = document.createElement('div');
+                item.className = 'bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex flex-col justify-between';
+                item.innerHTML = `
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-slate-300 font-semibold">${divName}</span>
+                        <span class="text-slate-500 font-mono">${count}/${totalInDiv}</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                        <div class="bg-gradient-to-r from-rose-500 to-amber-400 h-full transition-all duration-300" style="width: ${pct}%"></div>
+                    </div>
+                `;
+                divisionStatsContainer.appendChild(item);
+            });
+        }
+
+        // Change Card Visual Theme
+        function setTheme(themeClass) {
+            currentTheme = themeClass;
+            exportCardTarget.className = `${themeClass} rounded-2xl p-6 border-2 shadow-2xl w-full max-w-[460px] relative overflow-hidden font-sans transition-all`;
+            
+            // Update button borders
+            document.querySelectorAll('.theme-picker-btn').forEach(btn => {
+                if (btn.getAttribute('data-theme') === themeClass) {
+                    btn.classList.add('border-2', 'border-rose-500');
+                    btn.classList.remove('border-slate-800');
+                } else {
+                    btn.classList.remove('border-2', 'border-rose-500');
+                    btn.classList.add('border-slate-800');
+                }
+            });
+        }
+
+        // Export Card as Image File
+        function exportCardPNG() {
+            downloadPngBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Rendering Image...</span>`;
+            lucide.createIcons();
+
+            html2canvas(exportCardTarget, {
+                scale: 3,
+                backgroundColor: null,
+                useCORS: true
+            }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `deshi-dating-map-${Date.now()}.png`;
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+
+                downloadPngBtn.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i><span>Download PNG</span>`;
+                lucide.createIcons();
+                showToast('Card image downloaded successfully! 📸', 'success');
+            }).catch(err => {
+                console.error(err);
+                downloadPngBtn.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i><span>Download PNG</span>`;
+                lucide.createIcons();
+                showToast('Failed to generate image. Please try again.', 'error');
+            });
+        }
+
+        // Toast Feedback System
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `animate-toast pointer-events-auto px-4 py-2.5 rounded-xl shadow-xl text-xs font-bold font-body text-white flex items-center space-x-2 border bg-slate-900/95 border-rose-500/50 backdrop-blur-md mb-2`;
+            toast.innerHTML = `
+                <i data-lucide="sparkles" class="w-4 h-4 text-rose-400"></i>
+                <span>${message}</span>
+            `;
+            toastContainer.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.remove();
+            }, 2500);
+        }
+
+        // Reset All Selections
+        function resetMapSelections() {
+            selectedDistricts.clear();
+            BANGLADESH_64_DISTRICTS.forEach(d => updateDistrictVisuals(d.id));
+            updateAllStats();
+            showToast('Map reset back to zero!', 'info');
+        }
+
+        // Start App
+        window.onload = initApp;
+    </script>
+</body>
+</html>
